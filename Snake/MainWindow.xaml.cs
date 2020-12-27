@@ -127,6 +127,8 @@ namespace Snake
                     moveTimer.Stop();
                     teleportTimercreat.Stop();
                     tbGameOver.Visibility = Visibility.Visible;
+                    button1.Content = "Again?";
+                    button1.Visibility = Visibility.Visible;
                     return;
                 }
             }
@@ -138,6 +140,8 @@ namespace Snake
                 moveTimer.Stop();
                 teleportTimercreat.Stop();
                 tbGameOver.Visibility = Visibility.Visible;
+                button1.Content = "Again?";
+                button1.Visibility = Visibility.Visible;
                 return;
             }
 
@@ -215,7 +219,7 @@ namespace Snake
             canvas1.Children.Clear();
             // скрываем надпись "Game Over"
             tbGameOver.Visibility = Visibility.Hidden;
-            
+            button1.Visibility = Visibility.Hidden;
             // добавляем поле на канвас
             canvas1.Children.Add(field.image);
             // создаем новое яблоко и добавлем его
