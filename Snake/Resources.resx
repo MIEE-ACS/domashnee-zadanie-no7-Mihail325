@@ -133,6 +133,18 @@
   <data name="logo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\logo.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Portal11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Portal11.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Portal21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Portal21.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Portal31" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Portal31.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Portal41" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Portal41.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="snake" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\snake.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

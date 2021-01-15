@@ -32,7 +32,15 @@ namespace Snake
         int score;
         //таймер по которому 
         DispatcherTimer moveTimer;
-        
+        //для вызова различныыйх телепортов
+        static int varportal=0;
+        //таймер телепортов
+        DispatcherTimer teleportTimercreat;
+        //вспомогательные величины для телепортов
+        bool creatclose = false;
+        bool portal = false;
+        //список телепортов
+        List<Teleport> Portals= new List<Teleport>();
         //конструктор формы, выполняется при запуске программы
         public MainWindow()
         {
@@ -46,7 +54,10 @@ namespace Snake
             moveTimer = new DispatcherTimer();
             moveTimer.Interval = new TimeSpan(0, 0, 0, 0, 300);
             moveTimer.Tick += new EventHandler(moveTimer_Tick);
-            
+            //создаем таймер срабатывающий раз в 8 с
+            teleportTimercreat = new DispatcherTimer();
+            teleportTimercreat.Interval = new TimeSpan(0, 0, 0, 8);
+            teleportTimercreat.Tick += new EventHandler(teleportTimer_Tickcreat);
         }
 
         //метод перерисовывающий экран
@@ -62,12 +73,42 @@ namespace Snake
             //обновляем положение яблока
             Canvas.SetTop(apple.image, apple.y);
             Canvas.SetLeft(apple.image, apple.x);
-            
+
             //обновляем количество очков
             lblScore.Content = String.Format("{0}000", score);
         }
+        //обработчик таймера телепортов
+        void teleportTimer_Tickcreat(object sender, EventArgs e) 
+        {
+            if (creatclose == false)
+            {
+                portal = false;
+                foreach(var t in Portals)
+                {
+                    canvas1.Children.Remove(t.image1);
+                    canvas1.Children.Remove(t.image2);
+                }
+                creatclose = true;
+            }
+            else 
+            {
+                portal = true;
+                creatclose = false;
+                int i = 0;
+                foreach (var t in Portals)
+                {
+                    t.MoveTeleport(i);
+                    Canvas.SetTop(t.image1, t.Py1);
+                    Canvas.SetLeft(t.image1, t.Px1);
+                    Canvas.SetTop(t.image2, t.Py2);
+                    Canvas.SetLeft(t.image2, t.Px2);
+                    canvas1.Children.Add(t.image1);
+                    canvas1.Children.Add(t.image2);
+                    i++;
+                }
+            }
 
-        //обработчик тика таймера. Все движение происходит здесь
+        }
         void moveTimer_Tick(object sender, EventArgs e)
         {
             //в обратном порядке двигаем все элементы змеи
@@ -84,7 +125,10 @@ namespace Snake
                 {
                     //мы проиграли
                     moveTimer.Stop();
+                    teleportTimercreat.Stop();
                     tbGameOver.Visibility = Visibility.Visible;
+                    button1.Content = "Again?";
+                    button1.Visibility = Visibility.Visible;
                     return;
                 }
             }
@@ -94,7 +138,10 @@ namespace Snake
             {
                 //мы проиграли
                 moveTimer.Stop();
+                teleportTimercreat.Stop();
                 tbGameOver.Visibility = Visibility.Visible;
+                button1.Content = "Again?";
+                button1.Visibility = Visibility.Visible;
                 return;
             }
 
@@ -110,8 +157,35 @@ namespace Snake
                 canvas1.Children.Add(part.image);
                 snake.Add(part);
             }
-            //перерисовываем экран
-            UpdateField();
+            //проверяем поподание головы в один из телепортов
+            if (portal==true)
+            {
+                foreach (var t in Portals)
+                {
+                    if (head.x == t.Px1 && head.y == t.Py1)
+                    {
+                        teleportTimercreat.Stop();
+                        head.teleport(t.Px2, t.Py2);
+                        foreach (var p in Enumerable.Reverse(snake))
+                        {
+                            p.move();
+                        }
+                        teleportTimercreat.Start();
+                    }
+                    if (head.x == t.Px2 && head.y == t.Py2)
+                    {
+                        teleportTimercreat.Stop();
+                        head.teleport(t.Px1, t.Py1);
+                        foreach (var p in Enumerable.Reverse(snake))
+                        {
+                            p.move();
+                        }
+                        teleportTimercreat.Start();
+                    }
+                }
+            }
+                //перерисовываем экран
+                UpdateField();
         }
 
         // Обработчик нажатия на кнопку клавиатуры
@@ -145,7 +219,7 @@ namespace Snake
             canvas1.Children.Clear();
             // скрываем надпись "Game Over"
             tbGameOver.Visibility = Visibility.Hidden;
-            
+            button1.Visibility = Visibility.Hidden;
             // добавляем поле на канвас
             canvas1.Children.Add(field.image);
             // создаем новое яблоко и добавлем его
@@ -155,9 +229,14 @@ namespace Snake
             head = new Head();
             snake.Add(head);
             canvas1.Children.Add(head.image);
-            
             //запускаем таймер
+            for (int i=0; i < 4; i++) 
+            {
+                Teleport teleport = new Teleport(snake, apple,Portals);
+                Portals.Add(teleport);
+            }
             moveTimer.Start();
+            teleportTimercreat.Start();
             UpdateField();
 
         }
@@ -187,7 +266,6 @@ namespace Snake
                 }
             }
         }
-
         public class PositionedEntity : Entity
         {
             protected int m_x;
@@ -225,6 +303,140 @@ namespace Snake
                 }
             }
         }
+        // по идеи класс должен был наследоваться, но я позздно понял как нужно было решить проблему с двумя изображениями
+        //Cаnvans возмущался на добавлении второго одинакового изображения
+        public class Teleport
+        {
+            List<PositionedEntity> m_snake;
+            Apple m_apple;
+            List<Teleport> m_teleports;
+            int m_x1;
+            int m_x2;
+            int m_y1;
+            int m_y2;
+            int m_width;
+            int m_height;
+            Image m_image1;
+            Image m_image2;
+            static string[] ArrayImage = new string[4] { "pack://application:,,,/Resources/Portal11.png", "pack://application:,,,/Resources/Portal21.png", "pack://application:,,,/Resources/Portal31.png", "pack://application:,,,/Resources/Portal41.png" };
+            public Teleport(List<PositionedEntity> s, Apple apple,List<Teleport> teleports)
+            {
+                m_teleports = teleports;
+                m_snake = s;
+                m_apple = apple;
+                m_width = 40;
+                m_height = 40;
+                m_x1 = 40;
+                m_x2 = 400;
+                m_y1 = 40;
+                m_y2 = 400;
+                m_image1 = new Image();
+                m_image1.Source = (new ImageSourceConverter()).ConvertFromString(ArrayImage[varportal]) as ImageSource;
+                m_image1.Width = m_width;
+                m_image1.Height = m_height;
+                m_image2 = new Image();
+                m_image2.Source = (new ImageSourceConverter()).ConvertFromString(ArrayImage[varportal]) as ImageSource;
+                m_image2.Width = m_width;
+                m_image2.Height = m_height;
+                if (varportal < 3)
+                    varportal++;
+                else
+                    varportal = 0;
+            }
+            public void MoveTeleport(int i)
+            {
+                Random rand1 = new Random();
+                do
+                {
+                    Px1 = rand1.Next(13) * 40 + 40;
+                    Py1 = rand1.Next(13) * 40 + 40;
+                    Px2 = rand1.Next(13) * 40 + 40;
+                    Py2 = rand1.Next(13) * 40 + 40;
+                    bool overlap1 = false;
+                    bool overlap2 = false;
+                    foreach (var p in m_snake)
+                    {
+                        for(int j=0; j<4;j++)
+                        {
+                            if (j != i)
+                            {
+                                if ((p.x == Px1 && p.y == Py1) || (m_apple.x == Px1 && m_apple.y == Py1) || (m_teleports[j].Px1 == Px1 && m_teleports[j].Py1 == Py1))
+                                {
+                                    overlap1 = true;
+                                    break;
+                                }
+                                if ((p.x == Px2 && p.y == Py2) || (Px1 == Px2 && Py1 == Py2) || (m_apple.x == Px2 && m_apple.y == Py2) || (m_teleports[j].Px2 == Px2 && m_teleports[j].Py2 == Py2))
+                                {
+                                    overlap2 = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!overlap1 && !overlap2)
+                        break;
+                } while (true);
+            }
+            public Image image1
+            {
+                get
+                {
+                    return m_image1;
+                }
+            }
+            public Image image2
+            {
+                get
+                {
+                    return m_image2;
+                }
+            }
+            public int Px1
+            {
+                get
+                {
+                    return m_x1;
+                }
+                set
+                {
+                    m_x1 = value;
+                }
+            }
+            public int Px2
+            {
+                get
+                {
+                    return m_x2;
+                }
+                set
+                {
+                    m_x2 = value;
+                }
+            }
+            public int Py1
+            {
+                get
+                {
+                    return m_y1;
+                }
+                set
+                {
+                    m_y1 = value;
+                }
+            }
+            public int Py2
+            {
+                get
+                {
+                    return m_y2;
+                }
+                set
+                {
+                    m_y2 = value;
+                }
+            }
+        }
+
 
         public class Apple : PositionedEntity
         {
@@ -272,13 +484,13 @@ namespace Snake
                 set
                 {
                     m_direction = value;
-                    RotateTransform rotateTransform = new RotateTransform(90 * (int)value);
+                    RotateTransform rotateTransform = new RotateTransform(90 * (int)value+90);
                     image.RenderTransform = rotateTransform;
                 }
             }
 
             public Head()
-                : base(280, 280, 40, 40, "pack://application:,,,/Resources/head.png")
+                : base(280, 280, 40, 40, "pack://application:,,,/Resources/head2.png")
             {
                 image.RenderTransformOrigin = new Point(0.5, 0.5);
                 m_direction = Direction.NONE;
@@ -302,13 +514,18 @@ namespace Snake
                         break;
                 }
             }
+            public void teleport(int xt,int yt) 
+            {
+                x = xt;
+                y = yt;
+            }
         }
 
         public class BodyPart : PositionedEntity
         {
             PositionedEntity m_next;
             public BodyPart(PositionedEntity next)
-                : base(next.x, next.y, 40, 40, "pack://application:,,,/Resources/body.png")
+                : base(next.x, next.y, 40, 40, "pack://application:,,,/Resources/Chank.png")
             {
                 m_next = next;
             }
@@ -319,5 +536,7 @@ namespace Snake
                 y = m_next.y;
             }
         }
+
+
     }
 }
